@@ -1,13 +1,5 @@
 package com.example.javamasters2;
 
-import com.example.javamasters2.model.Album;
-import com.example.javamasters2.model.AlbumDetails;
-import com.example.javamasters2.model.Artist;
-import com.example.javamasters2.model.Shop;
-import com.example.javamasters2.repository.AlbumDetailsRepository;
-import com.example.javamasters2.repository.AlbumRepository;
-import com.example.javamasters2.repository.ArtistRepository;
-import com.example.javamasters2.repository.ShopRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -33,14 +25,14 @@ public class Javamasters2Application implements CommandLineRunner {
      * - unidirectional
      * - bidirectional
      */
-    @Autowired
+/*    @Autowired
     private AlbumDetailsRepository albumDetailsRepository;
     @Autowired
     private AlbumRepository albumRepository;
     @Autowired
     private ShopRepository shopRepository;
     @Autowired
-    private ArtistRepository artistRepository;
+    private ArtistRepository artistRepository;*/
 
     public static void main(String[] args) {
         SpringApplication.run(Javamasters2Application.class, args);
@@ -49,7 +41,7 @@ public class Javamasters2Application implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        Artist artist1 = new Artist("Artist 1");
+        /*Artist artist1 = new Artist("Artist 1");
         Artist artist2 = new Artist("Artist2");
 
         artistRepository.save(artist1);
@@ -76,7 +68,7 @@ public class Javamasters2Application implements CommandLineRunner {
         Shop shop = new Shop("Bucuresti sector 3");
 
         shop.setAlbumList(List.of(album1, album2));
-        shopRepository.save(shop);
+        shopRepository.save(shop);*/
 
     }
 }
