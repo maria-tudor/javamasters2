@@ -15,7 +15,7 @@ public interface GradeRepository extends JpaRepository<Grade, Integer> {
 // FIND GRADES BY DATE
 
     @Modifying
-    @Query(value = "update grade set grade_observations = :observations where grade_id = :id", nativeQuery = true)
+    @Query(value = "update grade set observations = :observations where grade_id = :id", nativeQuery = true)
     void modifyObservations(String observations, int id);
 
     @Modifying
