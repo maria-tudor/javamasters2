@@ -40,6 +40,11 @@ public class Grade {
         this.subject = subject;
     }
 
+    public Grade(int value, Date date, String observations, Subject subject, Student student){
+        this(value, date, observations, subject);
+        this.student = student;
+    }
+
     public Integer getGradeId() {
         return gradeId;
     }

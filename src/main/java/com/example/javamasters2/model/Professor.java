@@ -31,7 +31,6 @@ public class Professor {
 
     @ManyToMany(fetch = FetchType.LAZY,
             cascade = {
-                    CascadeType.PERSIST,
                     CascadeType.MERGE
             }, mappedBy = "professorList")
     @JsonIgnore
@@ -39,7 +38,6 @@ public class Professor {
 
     @ManyToMany(fetch = FetchType.LAZY,
             cascade = {
-                    CascadeType.PERSIST,
                     CascadeType.MERGE
             }, mappedBy = "professorList")
     @JsonIgnore
@@ -58,6 +56,16 @@ public class Professor {
     public Professor(String name, Date birthDate, String address, String role){
         this(name, address, role);
         this.professorBirthDate = birthDate;
+    }
+
+    public void addStudent(Student student){
+        students.add(student);
+        student.getProfessorList().add(this);
+    }
+
+    public void addSubject(Subject subject){
+        subjects.add(subject);
+        subject.getProfessorList().add(this);
     }
 
     public Integer getProfessorId() {
