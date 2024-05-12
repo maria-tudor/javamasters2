@@ -41,8 +41,8 @@ public class CollegeService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void modifyName(College college) {
-        collegeRepository.modifyName(college.getCollegeName(), college.getCollegeId());
+    public void updateCollege(College college) {
+        collegeRepository.updateCollege(college.getCollegeName(), college.getCollegeAddress(), college.getCollegeId());
     }
 
     public void deleteCollegeById(int collegeId){

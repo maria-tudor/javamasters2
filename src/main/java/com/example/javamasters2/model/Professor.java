@@ -3,6 +3,7 @@ package com.example.javamasters2.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,10 +14,10 @@ public class Professor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer professorId;
 
+    @NotNull
     private String professorName;
 
-    private Date professorBirthDate;
-
+    @NotNull
     private String professorRole; //to make enum
 
     private String professorAddress;
@@ -29,17 +30,11 @@ public class Professor {
     @JoinColumn(name = "department_id")
     private Department department;
 
-    @ManyToMany(fetch = FetchType.LAZY,
-            cascade = {
-                    CascadeType.MERGE
-            }, mappedBy = "professorList")
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "professorList")
     @JsonIgnore
     private List<Subject> subjects = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.LAZY,
-            cascade = {
-                    CascadeType.MERGE
-            }, mappedBy = "professorList")
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "professorList")
     @JsonIgnore
     private List<Student> students = new ArrayList<>();
 
@@ -51,11 +46,6 @@ public class Professor {
         this.professorName = name;
         this.professorAddress = address;
         this.professorRole = role;
-    }
-
-    public Professor(String name, Date birthDate, String address, String role){
-        this(name, address, role);
-        this.professorBirthDate = birthDate;
     }
 
     public void addStudent(Student student){
@@ -82,14 +72,6 @@ public class Professor {
 
     public void setProfessorName(String professorName) {
         this.professorName = professorName;
-    }
-
-    public Date getProfessorBirthDate() {
-        return professorBirthDate;
-    }
-
-    public void setProfessorBirthDate(Date professorBirthDate) {
-        this.professorBirthDate = professorBirthDate;
     }
 
     public String getProfessorRole() {

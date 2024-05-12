@@ -20,6 +20,6 @@ public interface CollegeRepository extends JpaRepository<College, Integer> {
 
     @Modifying
     @Query(nativeQuery = true,
-            value = "update college coll set coll.college_name = :name where coll.college_id = :id")
-    void modifyName(String name, int id);
+            value = "update college coll set coll.college_name = :name, coll.college_address = :address where coll.college_id = :id")
+    void updateCollege(String name, String address, int id);
 }

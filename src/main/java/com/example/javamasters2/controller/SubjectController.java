@@ -1,20 +1,21 @@
 package com.example.javamasters2.controller;
 
+import com.example.javamasters2.exceptions.BindingResultException;
+import com.example.javamasters2.exceptions.ResourceAlreadyReportedException;
+import com.example.javamasters2.exceptions.ResourceNotFoundException;
 import com.example.javamasters2.model.Professor;
-import com.example.javamasters2.model.Student;
 import com.example.javamasters2.model.Subject;
+import com.example.javamasters2.repository.ProfessorRepository;
 import com.example.javamasters2.repository.SubjectRepository;
-import com.example.javamasters2.service.ProfessorService;
 import com.example.javamasters2.service.SubjectService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/subject")
@@ -24,58 +25,66 @@ public class SubjectController {
     private SubjectService subjectService;
 
     @Autowired
-    private ProfessorService professorService;
+    private ProfessorRepository professorRepository;
     @Autowired
     private SubjectRepository subjectRepository;
 
-    @PostMapping("/{subjectId}")
-    public ResponseEntity<Subject> saveSubject(@PathVariable Integer subjectId,
-            @RequestBody Subject subject) {
-
-        Optional<Subject> postSubject = subjectRepository.findById(subjectId);
-
-        if(postSubject.isPresent()){
-            return new ResponseEntity<>(HttpStatus.ALREADY_REPORTED);
+    @PostMapping
+    public ResponseEntity<?> saveSubject(@Valid @RequestBody Subject subject, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()){
+            throw new BindingResultException("validation errors found for subject");
         }
-        List<Professor> professors;
-        if(subject.getProfessorList().size() != 0){
-            professors = subject.getProfessorList().stream().map((professor -> {
+        if(subject.getSubjectId() != null) {
+            Optional<Subject> postSubject = subjectRepository.findById(subject.getSubjectId());
+
+            if (postSubject.isPresent()) {
+                throw new ResourceAlreadyReportedException("subject already reported");
+            }
+        }
+
+        if(subject.getProfessorList() != null && subject.getProfessorList().size() != 0){
+            for(Professor professor : subject.getProfessorList()){
                 if(professor.getProfessorId() == null){
-                    return professorService.saveProfessor(professor);
+                    professorRepository.save(professor);
                 }
-                return professor;
-            })).collect(Collectors.toList());
-
+            }
         }
-        return ResponseEntity.ok().body(subjectService.saveSubject(subject));
+
+        Subject subjectFinal = subjectService.saveSubject(subject);
+        return ResponseEntity.ok().body(subjectFinal);
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<Subject>> retrieveSubjects() {
-        return ResponseEntity.ok().body(subjectService.retrieveSubjects());
+        List<Subject> subjects = subjectService.retrieveSubjects();
+        return ResponseEntity.ok().body(subjects);
     }
 
-    @GetMapping("/id")
-    public Subject getSubjectById(@RequestParam int subjectId) {
-        return subjectService.getSubjectById(subjectId);
+    @GetMapping("{subjectId}")
+    public Subject getSubjectById(@PathVariable int subjectId) {
+        Subject subject = subjectService.getSubjectById(subjectId);
+        if(subject == null){
+            throw new ResourceNotFoundException("subject " + subjectId + " not found");
+        }
+        return subject;
     }
 
-    @GetMapping("/name")
-    public Subject getSubjectByName(@RequestParam String subjectName) {
-        return subjectService.getSubjectByName(subjectName);
-    }
-
-    @DeleteMapping("/id")
+    @DeleteMapping("{subjectId}")
     @ResponseBody
-    public void deleteSubjectById(@RequestParam int subjectId){
+    public void deleteSubjectById(@PathVariable int subjectId){
         subjectService.deleteSubjectById(subjectId);
     }
 
     @PutMapping
-    public void modifyName(
+    public ResponseEntity<?> updateSubject(
             @Valid
             @RequestBody
-            Subject subject) {
-        subjectService.modifyName(subject);
+            Subject subject, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()){
+            throw new BindingResultException("validation errors found for subject");
+        }
+        subjectService.updateSubject(subject);
+
+        return ResponseEntity.ok().build();
     }
 }

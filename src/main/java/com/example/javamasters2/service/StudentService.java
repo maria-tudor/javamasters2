@@ -1,8 +1,11 @@
 package com.example.javamasters2.service;
 
+import com.example.javamasters2.model.Grade;
 import com.example.javamasters2.model.Student;
 import com.example.javamasters2.model.Subject;
 import com.example.javamasters2.repository.StudentRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,10 @@ public class StudentService {
         return studentRepository.findAll();
     }
 
+    public Page<Student> retrieveStudents(Pageable pageable){
+        return studentRepository.findAll(pageable);
+    }
+
     public List<Student> getStudentsByName(String studentName){
         return studentRepository.findStudentsByName(studentName);
     }
@@ -35,8 +42,9 @@ public class StudentService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void modifyName(Student student) {
-        studentRepository.modifyName(student.getStudentName(), student.getStudentId());
+    public void updateStudent(Student student) {
+        studentRepository.updateStudent(student.getStudentAddress(),
+                student.getStudentName(), student.getStudentSpecialty(), student.getStudentId());
     }
 
     public void deleteStudentById(int studentId){

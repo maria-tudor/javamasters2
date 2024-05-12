@@ -22,9 +22,9 @@ public class DepartmentService {
         return departmentRepository.findAll();
     }
 
-    public Department getDepartmentByName(String departmentName){
-        return departmentRepository.findDepartmentByName(departmentName);
-    }
+//    public Department getDepartmentByName(String departmentName){
+//        return departmentRepository.findDepartmentByName(departmentName);
+//    }
 
     public Department getDepartmentById(int departmentId){
         return departmentRepository.findDepartmentById(departmentId);
@@ -35,8 +35,8 @@ public class DepartmentService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void modifyName(Department department) {
-        departmentRepository.modifyName(department.getDepartmentName(), department.getDepartmentId());
+    public void updateDepartment(Department department) {
+        departmentRepository.updateDepartment(department.getDepartmentName(), department.getDepartmentId());
     }
 
     public void deleteDepartmentById(int departmentId){

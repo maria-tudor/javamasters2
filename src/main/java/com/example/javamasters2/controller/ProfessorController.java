@@ -1,26 +1,25 @@
 package com.example.javamasters2.controller;
 
+import com.example.javamasters2.exceptions.BindingResultException;
+import com.example.javamasters2.exceptions.ResourceAlreadyReportedException;
+import com.example.javamasters2.exceptions.ResourceNotFoundException;
 import com.example.javamasters2.model.*;
 import com.example.javamasters2.repository.*;
 import com.example.javamasters2.service.ProfessorService;
-import javax.validation.Valid;
-
-import com.example.javamasters2.service.StudentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@Validated
 @RequestMapping("/professor")
 public class ProfessorController {
 
     private final ProfessorService professorService;
-    private final StudentService studentService;
     private final StudentRepository studentRepository;
     private final ProfessorRepository professorRepository;
     private final SubjectRepository subjectRepository;
@@ -29,14 +28,12 @@ public class ProfessorController {
 
 
     public ProfessorController(ProfessorService professorService,
-                               StudentService studentService,
                                StudentRepository studentRepository,
                                ProfessorRepository professorRepository,
                                SubjectRepository subjectRepository,
                                DepartmentRepository departmentRepository,
                                CollegeRepository collegeRepository) {
         this.professorService = professorService;
-        this.studentService = studentService;
         this.studentRepository = studentRepository;
         this.professorRepository = professorRepository;
         this.subjectRepository = subjectRepository;
@@ -44,50 +41,46 @@ public class ProfessorController {
         this.collegeRepository = collegeRepository;
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<Professor>> retrieveProfessors() {
         return ResponseEntity.ok().body(professorService.retrieveProfessors());
     }
 
-    @GetMapping("/id")
-    public Professor getProfessorById(@RequestParam int professorId) {
-        return professorService.getProfessorById(professorId);
+    @GetMapping("{professorId}")
+    public Professor getProfessorById(@PathVariable int professorId) {
+        Professor prof = professorService.getProfessorById(professorId);
+        if(prof == null){
+            throw new ResourceNotFoundException("professor " + professorId + " not found");
+        }
+        return prof;
     }
 
-    @GetMapping("/name")
-    public List<Professor> getProfessorsByName(@RequestParam String professorName) {
-        return professorService.getProfessorsByName(professorName);
-    }
-
-    @PostMapping("/{professorId}/{collegeId}/{departmentId}/{studentId}/{subjectId}")
-    public ResponseEntity<Professor> saveProfessor(@PathVariable("studentId") Integer studentId,
-                                        @PathVariable("professorId") Integer professorId,
-                                        @PathVariable("subjectId") Integer subjectId,
-                                        @PathVariable("departmentId") Integer departmentId,
-                                        @PathVariable("collegeId") Integer collegeId,
-                                        @RequestBody Professor professor/*,
-                                         @RequestParam Integer collegeId,
-                                         @RequestParam Integer departmentId,
-                                         @RequestParam List<Integer> subjectIds,
-                                         @RequestParam List<Integer> studentIds*/
-    ) {
-        Optional<Professor> postProfessor = professorRepository.findById(professorId);
-        if(postProfessor.isPresent()){
-            return new ResponseEntity<>(HttpStatus.ALREADY_REPORTED);
+    @PostMapping
+    public ResponseEntity<?> saveProfessor(@Valid @RequestBody
+                                                       Professor professor, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()){
+            throw new BindingResultException("validation errors found for professor");
+        }
+        if(professor.getProfessorId() != null) {
+            Optional<Professor> postProfessor = professorRepository.findById(professor.getProfessorId());
+            if (postProfessor.isPresent()) {
+                throw new ResourceAlreadyReportedException("professor already reported");
+            }
         }
 
-        Optional<Student> postStudent = studentRepository.findById(studentId);
-        Optional<Subject> postSubject = subjectRepository.findById(subjectId);
-        Optional<Department> postDepartment = departmentRepository.findById(departmentId);
+        Integer collegeId = professor.getCollege().getCollegeId();
         Optional<College> postCollege = collegeRepository.findById(collegeId);
 
-        if(postStudent.isEmpty() || postSubject.isEmpty() || postDepartment.isEmpty() || postCollege.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        if(postCollege == null || postCollege.isEmpty()){
+            throw new ResourceNotFoundException("college " + collegeId + " not found");
         }
-        Student stud = postStudent.get();
-        Subject sub = postSubject.get();
-        Department dep = postDepartment.get();
-        College coll = postCollege.get();
+
+        Integer departmentId = professor.getDepartment().getDepartmentId();
+        Optional<Department> postDepartment = departmentRepository.findById(departmentId);
+
+        if(postDepartment == null || postDepartment.isEmpty()){
+            throw new ResourceNotFoundException("department " + departmentId + " not found");
+        }
 
         Optional<Department> departmentInCollege = departmentRepository.findDepartmentByIdCollege(departmentId, collegeId);
 
@@ -95,68 +88,45 @@ public class ProfessorController {
             return new ResponseEntity<>(HttpStatus.FAILED_DEPENDENCY);
         }
 
-        Optional<List<Student>> studentAssocProf = studentRepository.findStudentProfessorAssociated(studentId, professorId);
-        Optional<List<Subject>> subjectAssocProf = subjectRepository.findSubjectProfessorAssociated(subjectId, professorId);
-
-        // pentru a nu se scrie asocierea de mai multe ori in
-        if(studentAssocProf.isPresent() && studentAssocProf.get().size() >= 1 ||
-                (subjectAssocProf.isPresent() && subjectAssocProf.get().size() >= 1)){
-            return new ResponseEntity<>(HttpStatus.ALREADY_REPORTED);
+        List<Student> students = professor.getStudents();
+        if(students != null && !students.isEmpty()){
+            for(Student student : students){
+                if(student.getStudentId() == null){
+                    studentRepository.save(student);
+                }
+            }
         }
 
-        Optional<Professor> prof = professorRepository.findById(professorId);
-        Professor profFinal;
-        if(prof.isEmpty()){
-            profFinal = professorService.saveProfessor(new Professor(professor.getProfessorName(), professor.getProfessorAddress(), professor.getProfessorRole()));
-
-            stud.addProfessor(profFinal);
-            sub.addProfessor(profFinal);
-            dep.addProfessor(profFinal);
-            coll.addProfessor(profFinal);
-
-            studentRepository.save(stud);
-            subjectRepository.save(sub);
-            departmentRepository.save(dep);
-            collegeRepository.save(coll);
-
-            return ResponseEntity.ok().body(profFinal);
-        } else{
-            stud.addProfessor(prof.get());
-            sub.addProfessor(prof.get());
-            dep.addProfessor(prof.get());
-            coll.addProfessor(prof.get());
-
-            studentRepository.save(stud);
-            subjectRepository.save(sub);
-            departmentRepository.save(dep);
-            collegeRepository.save(coll);
-
-            return ResponseEntity.ok().body(prof.get());
-
+        List<Subject> subjects = professor.getSubjects();
+        if(subjects != null && !subjects.isEmpty()){
+            for(Subject subject : subjects){
+                if(subject.getSubjectId() == null){
+                    subjectRepository.save(subject);
+                }
+            }
         }
 
+        Professor profFinal = professorService.saveProfessor(professor);
 
-
-
-
-        ///return ResponseEntity.ok().body(professorService.saveProfessor(professor));//, collegeId, departmentId, subjectIds, studentIds));
-    }
-
-    public void checkForSubject(Subject subject){
-
+        return ResponseEntity.ok().body(profFinal);
     }
 
     @PutMapping
-    public void modifyName(
+    public ResponseEntity<?> updateProfessor(
             @Valid
             @RequestBody
-            Professor professor) {
-        professorService.modifyName(professor);
+            Professor professor, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()){
+            throw new BindingResultException("validation errors found for professor");
+        }
+        professorService.updateProfessor(professor);
+
+        return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/id")
+    @DeleteMapping("{professorId}")
     @ResponseBody
-    public void deleteProfessorById(@RequestParam int professorId){
+    public void deleteProfessorById(@PathVariable int professorId){
         professorService.deleteProfessorById(professorId);
     }
 }

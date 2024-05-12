@@ -6,6 +6,7 @@ import javax.persistence.*;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -14,17 +15,19 @@ import java.util.Optional;
 public class College {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int collegeId;
+    private Integer collegeId;
 
+    @NotNull
     private String collegeName;
 
+    @NotNull
     private String collegeAddress;
 
-    @OneToMany(mappedBy = "college")
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "college")
     @JsonIgnore
     private List<Department> departmentList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "college")
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "college")
     @JsonIgnore
     private List<Professor> professorList = new ArrayList<>();
 
@@ -42,11 +45,11 @@ public class College {
         department.setCollege(this);
     }
 
-    public int getCollegeId() {
+    public Integer getCollegeId() {
         return collegeId;
     }
 
-    public void setCollegeId(int collegeId) {
+    public void setCollegeId(Integer collegeId) {
         this.collegeId = collegeId;
     }
 

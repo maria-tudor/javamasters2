@@ -35,8 +35,8 @@ public class SubjectService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void modifyName(Subject subject) {
-        subjectRepository.modifyName(subject.getSubjectName(), subject.getSubjectId());
+    public void updateSubject(Subject subject) {
+        subjectRepository.updateSubject(subject.getSubjectName(), subject.getSubjectDescription(), subject.getSubjectId());
     }
 
     public void deleteSubjectById(int subjectId){

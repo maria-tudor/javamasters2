@@ -1,6 +1,13 @@
 package com.example.javamasters2.model;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.*;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Optional;
 
@@ -10,14 +17,19 @@ public class Grade {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer gradeId;
 
-    private int gradeValue;
+    @Min(value=1, message ="min grade 1")
+    @Max(value=10, message ="max grade 10")
+    @NotNull
+    private Integer gradeValue;
 
-    private Date gradeDate;
+    @DateTimeFormat(pattern = "yyyy/MM/dd")
+    @NotNull
+    private LocalDate gradeDate;
 
     @Column(nullable = true)
     private String observations;
 
-    @OneToOne
+    @OneToOne()
     @JoinColumn(name = "subject_id")
     private Subject subject;
 
@@ -29,18 +41,18 @@ public class Grade {
 
     }
 
-    public Grade(int value, Date date, String observations){
+    public Grade(int value, LocalDate date, String observations){
         this.gradeValue = value;
         this.gradeDate = date;
         this.observations = observations;
     }
 
-    public Grade(int value, Date date, String observations, Subject subject){
+    public Grade(int value, LocalDate date, String observations, Subject subject){
         this(value, date, observations);
         this.subject = subject;
     }
 
-    public Grade(int value, Date date, String observations, Subject subject, Student student){
+    public Grade(int value, LocalDate date, String observations, Subject subject, Student student){
         this(value, date, observations, subject);
         this.student = student;
     }
@@ -49,23 +61,23 @@ public class Grade {
         return gradeId;
     }
 
-    public void setGradeId(int gradeId) {
+    public void setGradeId(Integer gradeId) {
         this.gradeId = gradeId;
     }
 
-    public int getGradeValue() {
+    public Integer getGradeValue() {
         return gradeValue;
     }
 
-    public void setGradeValue(int gradeValue) {
+    public void setGradeValue(Integer gradeValue) {
         this.gradeValue = gradeValue;
     }
 
-    public Date getGradeDate() {
+    public LocalDate getGradeDate() {
         return gradeDate;
     }
 
-    public void setGradeDate(Date gradeDate) {
+    public void setGradeDate(LocalDate gradeDate) {
         this.gradeDate = gradeDate;
     }
 

@@ -20,7 +20,7 @@ public interface DepartmentRepository extends JpaRepository<Department, Integer>
 
     @Modifying
     @Query(value = "update department set department_name = :name where department_id = :id", nativeQuery = true)
-    void modifyName(String name, int id);
+    void updateDepartment(String name, int id);
 
     @Query(value = "select * from department where department_id = :id and college_id = :college_id", nativeQuery = true)
     Optional<Department> findDepartmentByIdCollege(Integer id, Integer college_id);

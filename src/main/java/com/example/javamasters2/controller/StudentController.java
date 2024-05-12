@@ -1,96 +1,95 @@
 package com.example.javamasters2.controller;
 
+import com.example.javamasters2.exceptions.BindingResultException;
+import com.example.javamasters2.exceptions.ResourceAlreadyReportedException;
+import com.example.javamasters2.exceptions.ResourceNotFoundException;
 import com.example.javamasters2.model.Grade;
-import com.example.javamasters2.model.Professor;
 import com.example.javamasters2.model.Student;
 import com.example.javamasters2.repository.StudentRepository;
 import com.example.javamasters2.service.GradeService;
-import com.example.javamasters2.service.ProfessorService;
 import com.example.javamasters2.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/student")
 public class StudentController {
     @Autowired
     private StudentService studentService;
-
-    @Autowired
-    private ProfessorService professorService;
-
     @Autowired
     private GradeService gradeService;
     @Autowired
     private StudentRepository studentRepository;
 
-    @PostMapping("/{studentId}")
-    public ResponseEntity<Student> saveStudent(@PathVariable Integer studentId,
-            @RequestBody Student student) {
-        Optional<Student> postStudent = studentRepository.findById(studentId);
-
-        if(postStudent.isPresent()){
-            return new ResponseEntity<>(HttpStatus.ALREADY_REPORTED);
+    @PostMapping
+    public ResponseEntity<?> saveStudent(@Valid @RequestBody Student student, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()){
+            throw new BindingResultException("validation errors found for student");
         }
-
-        List<Professor> professors;
-        if(student.getProfessorList().size() != 0){
-            professors = student.getProfessorList().stream().map((professor -> {
-                if(professor.getProfessorId() == null){
-                    return professorService.saveProfessor(professor);
-                }
-                return professor;
-            })).collect(Collectors.toList());
-
+        if(student.getStudentId() != null) {
+            Optional<Student> postStudent = studentRepository.findById(student.getStudentId());
+            if (postStudent.isPresent()) {
+                throw new ResourceAlreadyReportedException("student already reported");
+            }
         }
 
         List<Grade> grades;
-        if(student.getGradeList().size() != 0){
-            grades = student.getGradeList().stream().map((grade -> {
+        if(student.getGradeList() != null && !student.getGradeList().isEmpty()){
+            for(Grade grade : student.getGradeList()){
                 if(grade.getGradeId() == null){
-                    return gradeService.saveGrade(grade);
+                    gradeService.saveGrade(grade);
                 }
-                return grade;
-            })).collect(Collectors.toList());
-
+            }
         }
 
-        return ResponseEntity.ok().body(studentService.saveStudent(student));
+        Student studentFinal = studentService.saveStudent(student);
+
+        return ResponseEntity.ok().body(studentFinal);
     }
 
-    @GetMapping
-    public ResponseEntity<List<Student>> retrieveStudents() {
-        return ResponseEntity.ok().body(studentService.retrieveStudents());
+    @GetMapping("/all")
+    public ResponseEntity<Page<Student>> retrieveStudents(@RequestParam(name = "page", defaultValue = "0") int page,
+                                                          @RequestParam(name = "size", defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("studentSpecialty").ascending());
+        Page<Student> studentPage = studentService.retrieveStudents(pageable);
+        return ResponseEntity.ok().body(studentPage);
     }
 
     @PutMapping
-    public void modifyName(
+    public ResponseEntity<?> updateStudent(
             @Valid
             @RequestBody
-            Student student) {
-        studentService.modifyName(student);
+            Student student, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()){
+            throw new BindingResultException("validation errors found for student");
+        }
+        studentService.updateStudent(student);
+
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/id")
-    public Student getCollegeById(@RequestParam int studentId) {
-        return studentService.getStudentById(studentId);
+    @GetMapping("{studentId}")
+    public Student getStudentById(@PathVariable int studentId) {
+        Student student = studentService.getStudentById(studentId);
+        if(student == null){
+            throw new ResourceNotFoundException("student " + studentId + " not found");
+        }
+        return student;
     }
 
-    @GetMapping("/name")
-    public List<Student> getStudentByName(@RequestParam String studentName) {
-        return studentService.getStudentsByName(studentName);
-    }
-
-    @DeleteMapping("/id")
+    @DeleteMapping("{studentId}")
     @ResponseBody
-    public void deleteStudentById(@RequestParam int studentId){
+    public void deleteStudentById(@PathVariable int studentId){
         studentService.deleteStudentById(studentId);
     }
 }

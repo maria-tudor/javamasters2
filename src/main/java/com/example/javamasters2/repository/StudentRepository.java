@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,8 +21,11 @@ public interface StudentRepository extends JpaRepository<Student, Integer> {
 
     @Modifying
     @Query(nativeQuery = true,
-            value = "update student stu set stu.student_name = :name where stu.student_id = :id")
-    void modifyName(String name, int id);
+            value = "update student stu set stu.student_name = :name, " +
+                    "stu.student_address = :address, " +
+                    "stu.student_specialty = :specialty " +
+                    " where stu.student_id = :id")
+    void updateStudent(String address, String name, String specialty, int id);
 
     @Query(value = "select * from (student stud JOIN student_professor studprof " +
             "ON stud.student_id = studprof.student_id)" +

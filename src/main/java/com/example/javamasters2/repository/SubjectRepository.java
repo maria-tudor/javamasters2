@@ -22,8 +22,8 @@ public interface SubjectRepository extends JpaRepository<Subject, Integer> {
 
     @Modifying
     @Query(nativeQuery = true,
-            value = "update subject sub set sub.subject_name = :name where sub.subject_id = :id")
-    void modifyName(String name, int id);
+            value = "update subject sub set sub.subject_name = :name, sub.subject_description = :description where sub.subject_id = :id")
+    void updateSubject(String name, String description, int id);
 
     @Query(value = "select * from (subject sub JOIN subject_professor subprof " +
             "ON sub.subject_id = subprof.subject_id)" +

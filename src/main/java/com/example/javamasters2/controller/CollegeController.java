@@ -1,5 +1,8 @@
 package com.example.javamasters2.controller;
 
+import com.example.javamasters2.exceptions.BindingResultException;
+import com.example.javamasters2.exceptions.ResourceAlreadyReportedException;
+import com.example.javamasters2.exceptions.ResourceNotFoundException;
 import com.example.javamasters2.model.College;
 import com.example.javamasters2.model.Department;
 import com.example.javamasters2.model.Professor;
@@ -8,10 +11,9 @@ import com.example.javamasters2.service.CollegeService;
 import com.example.javamasters2.service.DepartmentService;
 import com.example.javamasters2.service.ProfessorService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -19,16 +21,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@Validated
 @RequestMapping("/college")
 public class CollegeController {
     @Autowired
     private final CollegeService collegeService;
     @Autowired
     private final DepartmentService departmentService;
-
     @Autowired
     private final ProfessorService professorService;
+    @Autowired
     private final CollegeRepository collegeRepository;
 
     public CollegeController(CollegeService collegeService, DepartmentService departmentService, ProfessorService professorService,
@@ -40,14 +41,18 @@ public class CollegeController {
     }
 
 
-    @PostMapping("/{collegeId}")
-    public ResponseEntity<College> saveCollege(@PathVariable Integer collegeId,
-            @RequestBody College college) {
+    @PostMapping
+    public ResponseEntity<?> saveCollege(@Valid @RequestBody College college, BindingResult bindingResult) { /// TODO change request for addCollege
+        if (bindingResult.hasErrors()){
+            throw new BindingResultException("validation errors found for college");
+        }
 
-        Optional<College> postCollege = collegeRepository.findById(collegeId);
+        if(college.getCollegeId() != null) {
+            Optional<College> postCollege = collegeRepository.findById(college.getCollegeId());
 
-        if(postCollege.isPresent()){
-            return new ResponseEntity<>(HttpStatus.ALREADY_REPORTED);
+            if (postCollege.isPresent()) {
+                throw new ResourceAlreadyReportedException("college already reported");
+            }
         }
 
         List<Department> departments;
@@ -75,46 +80,54 @@ public class CollegeController {
         return ResponseEntity.ok().body(collegeService.saveCollege(college));
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<College>> retrieveColleges() {
-        return ResponseEntity.ok().body(collegeService.retrieveColleges());
+        List<College> colleges = collegeService.retrieveColleges();
+        if(colleges == null){
+            throw new ResourceNotFoundException("colleges not found");
+        }
+        return ResponseEntity.ok().body(colleges);
     }
 
     @PutMapping
-    public void modifyName(
+    public ResponseEntity<?> updateCollege(
             @Valid
             @RequestBody
-            College college) {
-        collegeService.modifyName(college);
+            College college, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()){
+            throw new BindingResultException("validation errors found for college");
+        }
+        collegeService.updateCollege(college);
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/id")
-    public College getCollegeById(@RequestParam int collegeId) {
-        return collegeService.getCollegeById(collegeId);
+    @GetMapping("{collegeId}")
+    public College getCollegeById(@PathVariable int collegeId) {
+        College college = collegeService.getCollegeById(collegeId);
+        if(college == null){
+            throw new ResourceNotFoundException("college " + collegeId + " not found");
+        }
+        return college;
     }
 
-    @GetMapping("/address")
-    public College getCollegeByAddress(@RequestParam String collegeAddress) {
-        return collegeService.getCollegeByAddress(collegeAddress);
-    }
-
-    @GetMapping("/name")
-    public College getCollegeByName(@RequestParam String collegeName) {
-        return collegeService.getCollegeByName(collegeName);
-    }
-
-    @DeleteMapping("/id")
+    @DeleteMapping("{collegeId}")
     @ResponseBody
-    public void deleteCollegeById(@RequestParam int collegeId){
-        collegeService.deleteCollegeById(collegeId);
+    public void deleteCollegeById(@PathVariable String collegeId){
+        Integer collegeIdInt = Integer.parseInt(collegeId);
+        collegeService.deleteCollegeById(collegeIdInt);
     }
 
     @PutMapping("/studentCourse")
-    public void addStudentToCourse(
+    public ResponseEntity<?> addStudentToCourse(
             @Valid
             @RequestBody
-            int studentId, int subjectId) {
+            int studentId, int subjectId, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()){
+            throw new BindingResultException("validation errors found for college");
+        }
         collegeService.addStudentToCourse(studentId, subjectId);
+
+        return ResponseEntity.ok().build();
     }
 
 }

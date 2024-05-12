@@ -47,8 +47,9 @@ public class ProfessorService {
 
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void modifyName(Professor professor) {
-        professorRepository.modifyName(professor.getProfessorName(), professor.getProfessorId());
+    public void updateProfessor(Professor professor) {
+        professorRepository.updateProfessor(professor.getProfessorName(), professor.getProfessorAddress(),
+                professor.getProfessorRole(), professor.getProfessorId());
     }
 
     public void deleteProfessorById(int professorId){

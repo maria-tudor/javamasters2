@@ -3,6 +3,7 @@ package com.example.javamasters2.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,13 +13,14 @@ public class Department {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer departmentId;
 
+    @NotNull
     private String departmentName;
 
     @ManyToOne
     @JoinColumn(name = "college_id")
     private College college;
 
-    @OneToMany(mappedBy = "department")
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "department")
     @JsonIgnore
     private List<Professor> professorList = new ArrayList<>();
 

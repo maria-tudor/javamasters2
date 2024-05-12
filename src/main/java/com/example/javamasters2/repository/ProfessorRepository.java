@@ -17,8 +17,11 @@ public interface ProfessorRepository extends JpaRepository<Professor, Integer> {
 
     @Modifying
     @Query(nativeQuery = true,
-            value = "update professor prof set prof.professor_name = :name where prof.professor_id = :id")
-    void modifyName(String name, int id);
+            value = "update professor prof set prof.professor_name = :name, " +
+                    "prof.professor_address = :address, " +
+                    "prof.professor_role = :role " +
+                    "where prof.professor_id = :id")
+    void updateProfessor(String name, String address, String role, int id);
 
 
 }

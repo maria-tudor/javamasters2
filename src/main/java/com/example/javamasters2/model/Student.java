@@ -3,30 +3,29 @@ package com.example.javamasters2.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 @Entity
 public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int studentId;
+    private Integer studentId;
 
+    @NotNull
     private String studentName;
 
-    private Date studentBirthDate;
-
+    @NotNull
     private String studentSpecialty;
 
+    @NotNull
     private String studentAddress;
 
-    @OneToMany(mappedBy = "student")
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "student")
     @JsonIgnore
     private List<Grade> gradeList = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.LAZY,
-            cascade = {
-                    CascadeType.MERGE
-            })
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "student_professor", joinColumns = @JoinColumn(name = "student_id"),
             inverseJoinColumns = @JoinColumn(name = "professor_id"))
     private List<Professor> professorList = new ArrayList<>();
@@ -41,14 +40,9 @@ public class Student {
         this.studentAddress = address;
     }
 
-    public Student(String name, String specialty, String address, List<Professor> professorList ){
+    public Student(String name, String specialty, String address, List<Professor> professorList){
         this(name, specialty, address);
         this.professorList = professorList;
-    }
-
-    public Student(String name, Date birthDate, String specialty, String address){
-        this(name, specialty, address);
-        this.studentBirthDate = birthDate;
     }
 
     public void addProfessor(Professor professor){
@@ -61,11 +55,11 @@ public class Student {
         grade.setStudent(this);
     }
 
-    public int getStudentId() {
+    public Integer getStudentId() {
         return studentId;
     }
 
-    public void setStudentId(int studentId) {
+    public void setStudentId(Integer studentId) {
         this.studentId = studentId;
     }
 
@@ -75,14 +69,6 @@ public class Student {
 
     public void setStudentName(String studentName) {
         this.studentName = studentName;
-    }
-
-    public Date getStudentBirthDate() {
-        return studentBirthDate;
-    }
-
-    public void setStudentBirthDate(Date studentBirthDate) {
-        this.studentBirthDate = studentBirthDate;
     }
 
     public String getStudentSpecialty() {
