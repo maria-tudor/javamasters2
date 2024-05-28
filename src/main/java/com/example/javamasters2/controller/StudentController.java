@@ -5,6 +5,7 @@ import com.example.javamasters2.exceptions.ResourceAlreadyReportedException;
 import com.example.javamasters2.exceptions.ResourceNotFoundException;
 import com.example.javamasters2.model.Grade;
 import com.example.javamasters2.model.Student;
+import com.example.javamasters2.model.Subject;
 import com.example.javamasters2.repository.StudentRepository;
 import com.example.javamasters2.service.GradeService;
 import com.example.javamasters2.service.StudentService;
@@ -57,12 +58,25 @@ public class StudentController {
         return ResponseEntity.ok().body(studentFinal);
     }
 
-    @GetMapping("/all")
+    @GetMapping("/studentEnrolledInCourse")
+    public ResponseEntity<Subject> isStudentEnrolledInCourse(@RequestParam int studentId,
+                                                             @RequestParam int subjectId){
+        return ResponseEntity.ok().body(studentService.isStudentEnrolledInCourse(studentId, subjectId));
+    }
+
+    @GetMapping("/all/page")
     public ResponseEntity<Page<Student>> retrieveStudents(@RequestParam(name = "page", defaultValue = "0") int page,
                                                           @RequestParam(name = "size", defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("studentSpecialty").ascending());
         Page<Student> studentPage = studentService.retrieveStudents(pageable);
         return ResponseEntity.ok().body(studentPage);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Student>> retrieveStudents() {
+//        Pageable pageable = PageRequest.of(page, size, Sort.by("studentSpecialty").ascending());
+        List<Student> students = studentRepository.findAll();
+        return ResponseEntity.ok().body(students);
     }
 
     @PutMapping

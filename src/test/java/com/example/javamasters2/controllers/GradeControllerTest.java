@@ -1,14 +1,11 @@
 package com.example.javamasters2.controllers;
 
-import com.example.javamasters2.exporter.CollegeExporter;
-import com.example.javamasters2.exporter.GradeExporter;
-import com.example.javamasters2.exporter.StudentExporter;
-import com.example.javamasters2.exporter.SubjectExporter;
-import com.example.javamasters2.model.Grade;
-import com.example.javamasters2.model.Student;
-import com.example.javamasters2.model.Subject;
+import com.example.javamasters2.exporter.*;
+import com.example.javamasters2.model.*;
 import com.example.javamasters2.repository.GradeRepository;
+import com.example.javamasters2.service.ProfessorService;
 import com.example.javamasters2.util.TestHelper;
+import org.hibernate.engine.jdbc.internal.DDLFormatterImpl;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
@@ -18,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.parameters.P;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.Assert;
@@ -46,6 +44,8 @@ public class GradeControllerTest {
     private Environment environment;
     @Autowired
     private GradeRepository gradeRepository;
+    @Autowired
+    private ProfessorService professorService;
     private int gradeIdInserted;
     private String activeProfile;
     private Student student;
@@ -65,9 +65,61 @@ public class GradeControllerTest {
         gradeDate = LocalDate.now();
         observations = "observations test" + activeProfile;
         grade = new Grade(gradeValue, gradeDate, observations);
-        student = new Student("student test grade", "specialty test grade", "address test grade");
-        subject = new Subject("materie test grade", "descr test grade");
+
+        int collegeId = 0;
+        int departmentId = 0;
+        int professorId = 0;
+
+        College college = new College("test", "test");
         try {
+            Map dataToPostCollege = TestHelper.convertGsonToFasterXmlMapStyle(CollegeExporter.exportCollege(college));
+            MvcResult collegeResult =
+                    mockMvc.perform(post("/college/").contentType(MediaType.APPLICATION_JSON)
+                                    .content(new JSONObject(dataToPostCollege).toString()))
+                            .andReturn();
+
+            int responseStatusCollege = collegeResult.getResponse().getStatus();
+            if (responseStatusCollege == HttpStatus.OK.value()) {
+                JSONObject collegeJSON = new JSONObject(collegeResult.getResponse().getContentAsString());
+                collegeId = (int) collegeJSON.get(COLLEGE_ID);
+                college.setCollegeId(collegeId);
+            }
+
+            Department department = new Department("test");
+            department.setCollege(college);
+
+            Map dataToPostDep = TestHelper.convertGsonToFasterXmlMapStyle(DepartmentExporter.exportDepartment(department));
+            MvcResult depResult =
+                    mockMvc.perform(post("/department/").contentType(MediaType.APPLICATION_JSON)
+                                    .content(new JSONObject(dataToPostDep).toString()))
+                            .andReturn();
+
+            int responseStatusDep = depResult.getResponse().getStatus();
+            if (responseStatusDep == HttpStatus.OK.value()) {
+                JSONObject depJSON = new JSONObject(depResult.getResponse().getContentAsString());
+                departmentId = (int) depJSON.get(DEPARTMENT_ID);
+                department.setDepartmentId(departmentId);
+            }
+
+            Professor professor = new Professor("test", "test", "test");
+            professor.setDepartment(department);
+            professor.setCollege(college);
+
+            Map dataToPostProf = TestHelper.convertGsonToFasterXmlMapStyle(ProfessorExporter.exportProfessor(professor));
+            MvcResult profResult =
+                    mockMvc.perform(post("/professor/").contentType(MediaType.APPLICATION_JSON)
+                                    .content(new JSONObject(dataToPostProf).toString()))
+                            .andReturn();
+
+            int responseStatusProf = profResult.getResponse().getStatus();
+            if (responseStatusProf == HttpStatus.OK.value()) {
+                JSONObject profJSON = new JSONObject(profResult.getResponse().getContentAsString());
+                professorId = (int) profJSON.get(PROFESSOR_ID);
+                professor.setProfessorId(professorId);
+            }
+
+            student = new Student("student test grade", "specialty test grade", "address test grade");
+            subject = new Subject("materie test grade", "descr test grade");
             Map dataToPost = TestHelper.convertGsonToFasterXmlMapStyle(StudentExporter.exportStudent(student));
             MvcResult studentResult =
                     mockMvc.perform(post("/student/").contentType(MediaType.APPLICATION_JSON)
@@ -96,6 +148,8 @@ public class GradeControllerTest {
                 subject.setSubjectId(subjectIdInserted);
             }
             grade.setSubject(subject);
+            professorService.addStudentToProfessor(professorId, studentIdInserted);
+            professorService.addSubjectToProfessor(professorId, subjectIdInserted);
         } catch (Exception ex) {
             System.out.println("Exception setting up grade controller test");
         }
@@ -228,11 +282,10 @@ public class GradeControllerTest {
         Assert.isTrue(responseStatus == HttpStatus.OK.value(),
                 "Nu a putut fi executat cu succes request-ul retrieveGrades");
 
-        JSONObject gradeJSON = new JSONObject(gradeResult.getResponse().getContentAsString());
-        JSONArray content = (JSONArray)gradeJSON.get("content");
+        JSONArray gradeJSON = new JSONArray(gradeResult.getResponse().getContentAsString());
         boolean gradeFound = false;
-        for(int i = 0; i < content.length(); i++){
-            JSONObject gradeObject = (JSONObject) content.get(i);
+        for(int i = 0; i < gradeJSON.length(); i++){
+            JSONObject gradeObject = (JSONObject) gradeJSON.get(i);
             if(((Integer)gradeObject.get(GRADE_ID)) == gradeIdInserted){
                 gradeFound = true;
                 break;

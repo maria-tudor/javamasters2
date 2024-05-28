@@ -160,11 +160,10 @@ public class StudentControllerTest {
         Assert.isTrue(responseStatus == HttpStatus.OK.value(),
                 "Nu a putut fi executat cu succes request-ul retrieveStudents");
 
-        JSONObject studentJSON = new JSONObject(studentResult.getResponse().getContentAsString());
-        JSONArray content = (JSONArray) studentJSON.get("content");
+        JSONArray studentJSON = new JSONArray(studentResult.getResponse().getContentAsString());
         boolean studentFound = false;
-        for(int i = 0; i < content.length(); i++){
-            if((Integer)((JSONObject)content.get(i)).get(STUDENT_ID) == studentIdInserted){
+        for(int i = 0; i < studentJSON.length(); i++){
+            if((Integer)((JSONObject)studentJSON.get(i)).get(STUDENT_ID) == studentIdInserted){
                 studentFound = true;
             }
         }

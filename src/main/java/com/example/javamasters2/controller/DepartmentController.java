@@ -110,6 +110,10 @@ public class DepartmentController {
     @DeleteMapping("{departmentId}")
     @ResponseBody
     public void deleteDepartmentById(@PathVariable int departmentId){
-        departmentService.deleteDepartmentById(departmentId);
+        Department department = departmentRepository.findDepartmentById(departmentId);
+        if(department == null){
+            throw new ResourceNotFoundException("department " + departmentId + " not found");
+        }
+        departmentService.deleteDepartmentById(department);
     }
 }

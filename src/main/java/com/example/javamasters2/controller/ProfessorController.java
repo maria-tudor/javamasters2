@@ -119,14 +119,69 @@ public class ProfessorController {
         if (bindingResult.hasErrors()){
             throw new BindingResultException("validation errors found for professor");
         }
+
+        College colObtinut = collegeRepository.findCollegeById(professor.getCollege().getCollegeId());
+        if(colObtinut == null){
+            throw new ResourceNotFoundException("college  not found");
+        }
+
+        Department depObtinut = departmentRepository.findDepartmentById(professor.getDepartment().getDepartmentId());
+        if(depObtinut == null){
+            throw new ResourceNotFoundException("department not found");
+        }
+
+        if(depObtinut.getCollege().getCollegeId() != colObtinut.getCollegeId()){
+            throw new ResourceNotFoundException("department is not in college");
+        }
+
         professorService.updateProfessor(professor);
 
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("{professorId}")
+    @DeleteMapping("/{professorId}")
     @ResponseBody
     public void deleteProfessorById(@PathVariable int professorId){
+        professorService.removeProfessorFromAllSubjects(professorId);
+        professorService.removeProfessorOfAllStudents(professorId);
         professorService.deleteProfessorById(professorId);
+    }
+
+    @PostMapping("/addSubjectToProfessor")
+    public void addSubjectToProfessor(@RequestParam int professorId, @RequestParam int subjectId) {
+        Optional<Professor> profObtinut = professorRepository.findById(professorId);
+        if(profObtinut == null || profObtinut.isEmpty()){
+            throw new ResourceNotFoundException("professor " + professorId + " not found");
+        }
+
+        Optional<Subject> subObtinut = subjectRepository.findById(subjectId);
+        if(subObtinut == null || subObtinut.isEmpty()){
+            throw new ResourceNotFoundException("subject " + subjectId + " not found");
+        }
+
+        if(professorService.doesProfessorTeachSubject(professorId, subjectId)){
+            throw new ResourceAlreadyReportedException("professor already teaches subject");
+        }
+
+        professorService.addSubjectToProfessor(professorId, subjectId);
+    }
+
+    @PostMapping("/addStudentToProfessor")
+    public void addStudentToProfessor(@RequestParam int professorId, @RequestParam int studentId) {
+        Optional<Professor> profObtinut = professorRepository.findById(professorId);
+        if(profObtinut == null || profObtinut.isEmpty()){
+            throw new ResourceNotFoundException("professor " + professorId + " not found");
+        }
+
+        Optional<Student> stuObtinut = studentRepository.findById(studentId);
+        if(stuObtinut == null || stuObtinut.isEmpty()){
+            throw new ResourceNotFoundException("student " + studentId + " not found");
+        }
+
+        if(professorService.doesProfessorTeachStudent(professorId, studentId)){
+            throw new ResourceAlreadyReportedException("professor already teaches student");
+        }
+
+        professorService.addStudentToProfessor(professorId, studentId);
     }
 }

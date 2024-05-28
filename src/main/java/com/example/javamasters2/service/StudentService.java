@@ -4,11 +4,13 @@ import com.example.javamasters2.model.Grade;
 import com.example.javamasters2.model.Student;
 import com.example.javamasters2.model.Subject;
 import com.example.javamasters2.repository.StudentRepository;
+import com.example.javamasters2.repository.SubjectRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -16,9 +18,11 @@ import java.util.List;
 public class StudentService {
 
     private final StudentRepository studentRepository;
+    private final SubjectRepository subjectRepository;
 
-    public StudentService(StudentRepository studentRepository){
+    public StudentService(StudentRepository studentRepository, SubjectRepository subjectRepository){
         this.studentRepository = studentRepository;
+        this.subjectRepository = subjectRepository;
     }
 
     public List<Student> retrieveStudents(){
@@ -49,5 +53,14 @@ public class StudentService {
 
     public void deleteStudentById(int studentId){
         studentRepository.deleteById(studentId);
+    }
+
+    public Subject isStudentEnrolledInCourse(int studentId, int subjectId){
+        boolean isStudentEnrolled =  studentRepository.isStudentEnrolledInCourse(studentId, subjectId) == 1;
+        boolean hasStudentReceivedGrade = studentRepository.hasStudentReceivedGrade(studentId, subjectId) == 1;
+        if(isStudentEnrolled && !hasStudentReceivedGrade){
+            return subjectRepository.findSubjectById(subjectId);
+        }
+        return null;
     }
 }

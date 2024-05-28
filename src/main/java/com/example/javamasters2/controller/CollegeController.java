@@ -7,6 +7,7 @@ import com.example.javamasters2.model.College;
 import com.example.javamasters2.model.Department;
 import com.example.javamasters2.model.Professor;
 import com.example.javamasters2.repository.CollegeRepository;
+import com.example.javamasters2.repository.DepartmentRepository;
 import com.example.javamasters2.service.CollegeService;
 import com.example.javamasters2.service.DepartmentService;
 import com.example.javamasters2.service.ProfessorService;
@@ -114,6 +115,16 @@ public class CollegeController {
     @ResponseBody
     public void deleteCollegeById(@PathVariable String collegeId){
         Integer collegeIdInt = Integer.parseInt(collegeId);
+        College college = collegeService.getCollegeById(collegeIdInt);
+        if(college == null){
+            throw new ResourceNotFoundException("college " + collegeId + " not found");
+        }
+
+        int numberOfDept = college.getDepartmentList().size();
+        for(int i = 0; i < numberOfDept; i++){
+            Department departmentCurent = college.getDepartmentList().get(i);
+            professorService.deleteProfessorsFrom(departmentCurent);
+        }
         collegeService.deleteCollegeById(collegeIdInt);
     }
 

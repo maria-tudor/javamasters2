@@ -3,6 +3,7 @@ package com.example.javamasters2.service;
 import com.example.javamasters2.model.College;
 import com.example.javamasters2.model.Department;
 import com.example.javamasters2.repository.DepartmentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,8 @@ import java.util.List;
 public class DepartmentService {
 
     DepartmentRepository departmentRepository;
+    @Autowired
+    ProfessorService professorService;
 
     public DepartmentService(DepartmentRepository departmentRepository){
         this.departmentRepository = departmentRepository;
@@ -40,6 +43,15 @@ public class DepartmentService {
     }
 
     public void deleteDepartmentById(int departmentId){
-        departmentRepository.deleteById(departmentId);
+        Department department = departmentRepository.findDepartmentById(departmentId);
+        if(department != null) {
+            deleteDepartmentById(department);
+        }
+    }
+
+    @Transactional
+    public void deleteDepartmentById(Department department){
+        professorService.deleteProfessorsFrom(department);
+        departmentRepository.deleteById(department.getDepartmentId());
     }
 }

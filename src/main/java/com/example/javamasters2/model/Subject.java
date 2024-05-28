@@ -1,6 +1,8 @@
 package com.example.javamasters2.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -24,9 +26,12 @@ public class Subject {
             inverseJoinColumns = @JoinColumn(name = "professor_id"))
     private List<Professor> professorList = new ArrayList<>();
 
-    @OneToOne(mappedBy = "subject", cascade = CascadeType.REMOVE)
-    @JsonIgnore
-    private Grade grade;
+//    @OneToOne(mappedBy = "subject", cascade = CascadeType.REMOVE)
+//    @JsonIgnore
+//    private Grade grade;
+
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "subject")
+    private List<Grade> gradeList = new ArrayList<>();
 
     public Subject(){
 
@@ -79,11 +84,11 @@ public class Subject {
         this.professorList = professorList;
     }
 
-    public Grade getGrade() {
-        return grade;
+    public List<Grade> getGrades() {
+        return gradeList;
     }
 
-    public void setGrade(Grade grade) {
-        this.grade = grade;
+    public void setGrades(List<Grade> gradeList) {
+        this.gradeList = gradeList;
     }
 }

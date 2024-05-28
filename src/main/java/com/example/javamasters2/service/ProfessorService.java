@@ -63,4 +63,47 @@ public class ProfessorService {
     public Professor getProfessorById(int professorId){
         return professorRepository.findProfessorById(professorId);
     }
+
+    public boolean doesProfessorTeachSubject(int professorId, int subjectId){
+        return professorRepository.doesProfessorTeachSubject(professorId, subjectId) == 1;
+    }
+
+    @Transactional
+    public void addSubjectToProfessor(int professorId, int subjectId){
+        professorRepository.addSubjectToProfessor(professorId, subjectId);
+    }
+
+    public boolean doesProfessorTeachStudent(int professorId, int studentId){
+        return professorRepository.doesProfessorTeachStudent(professorId, studentId) == 1;
+    }
+
+    @Transactional
+    public void addStudentToProfessor(int professorId, int studentId){
+        professorRepository.addStudentToProfessor(professorId, studentId);
+    }
+
+    @Transactional
+    public void removeProfessorFromSubject(int professorId, int subjectId){
+        professorRepository.removeProfessorFromSubject(professorId, subjectId);
+    }
+
+    @Transactional
+    public void removeProfessorFromAllSubjects(int professorId){
+        professorRepository.removeProfessorFromAllSubjects(professorId);
+    }
+
+    @Transactional
+    public void removeProfessorOfAllStudents(int professorId){
+        professorRepository.removeProfessorOfAllStudents(professorId);
+    }
+
+    @Transactional
+    public void deleteProfessorsFrom(Department department){
+        int numberOfProf = department.getProfessorList().size();
+        for(int i = 0; i < numberOfProf; i++){
+            int professorIdCurent = department.getProfessorList().get(i).getProfessorId();
+            removeProfessorFromAllSubjects(professorIdCurent);
+            removeProfessorOfAllStudents(professorIdCurent);
+        }
+    }
 }

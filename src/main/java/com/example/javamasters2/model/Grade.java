@@ -1,5 +1,6 @@
 package com.example.javamasters2.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
@@ -29,8 +30,9 @@ public class Grade {
     @Column(nullable = true)
     private String observations;
 
-    @OneToOne()
+    @ManyToOne
     @JoinColumn(name = "subject_id")
+    @JsonIgnoreProperties("grades")
     private Subject subject;
 
     @ManyToOne
